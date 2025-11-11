@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { sign } from "hono/jwt";
+import { sign, verify } from "hono/jwt";
 import { authMiddleware, rateLimitMiddleware } from "./middleware";
-import { deleteCookie, setCookie } from "hono/cookie";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import type { Customer } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -45,7 +46,21 @@ app.post("/login", async (c) => {
         },
         c.env.JWT_SECRET
       );
+      const refreshToken = await sign(
+        {
+          sub: query.id,
+          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+        },
+        c.env.JWT_SECRET
+      );
       setCookie(c, "token", token, {
+        path: "/",
+        secure: true,
+        sameSite: "None",
+        httpOnly: true,
+        domain: c.env.CORS,
+      });
+      setCookie(c, "refresh_token", refreshToken, {
         path: "/",
         secure: true,
         sameSite: "None",
@@ -77,8 +92,10 @@ app.get("/customers/:id", async (c) => {
   try {
     const query = await c.env.DB.prepare("SELECT * FROM customers WHERE id = ?")
       .bind(userId)
-      .first();
+      .first<Customer>();
     if (!query) return c.text("not found", 404);
+
+    if (query.type === "page") return c.json({ redirect: query.absoluteUrl });
 
     return c.json(query);
   } catch (error) {
@@ -110,6 +127,26 @@ app.post("/api/resetpassword", async (c) => {
   }
 });
 
+app.post("/api/refresh", async (c) => {
+  const refreshToken = getCookie(c, "refresh_token");
+  if (!refreshToken) return c.text("Unauthorized", 401);
+  try {
+    const claims = await verify(refreshToken, c.env.JWT_SECRET);
+    setCookie(
+      c,
+      "token",
+      await sign(
+        {
+          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+        },
+        c.env.JWT_SECRET
+      )
+    );
+  } catch (error) {
+    return c.text("Unauthorized", 401);
+  }
+});
+
 app.delete("/api/customers", async (c) => {
   try {
     const customers = await c.req.json<
@@ -137,30 +174,48 @@ app.post("/api/customers", async (c) => {
   const profileImg = data.get("profileImg") as File;
   const coverImg = data.get("coverImg") as File;
   const fullName = data.get("fullName");
+  const type = data.get("type");
+  const absoluteUrl = data.get("absoluteUrl");
   const phoneNumber = data.get("phoneNumber");
   const email = data.get("email");
   const socialMedia = data.get("socialMedia");
   const imgKey: string[] = [];
   try {
-    const media = [profileImg, coverImg];
-    await Promise.allSettled(
-      media.map((itm) => {
-        const extenstion = itm.name.split(".").pop();
-        const url = crypto.randomUUID().replaceAll("-", "") + "." + extenstion;
-        imgKey.push(url);
-        return c.env.BUCKET.put(url, itm.stream(), {
-          httpMetadata: { contentType: itm.type },
-        });
-      })
-    );
+    if (profileImg && coverImg) {
+      const media = [profileImg, coverImg];
+      await Promise.allSettled(
+        media.map((itm) => {
+          const extenstion = itm.name.split(".").pop();
+          const url =
+            crypto.randomUUID().replaceAll("-", "") + "." + extenstion;
+          imgKey.push(url);
+          return c.env.BUCKET.put(url, itm.stream(), {
+            httpMetadata: { contentType: itm.type },
+          });
+        })
+      );
+    } else {
+      imgKey.push("", "");
+    }
     const stmnt = await c.env.DB.prepare(
-      "INSERT INTO customers (fullName,email,phoneNumber,socialMedia,profileImg,coverImg,createdAt) VALUES (?,?,?,?,?,?,datetime('now'))"
+      "INSERT INTO customers (fullName,email,phoneNumber,socialMedia,profileImg,coverImg,createdAt,type,absoluteUrl) VALUES (?,?,?,?,?,?,datetime('now'),?,?)"
     )
-      .bind(fullName, email, phoneNumber, socialMedia, imgKey[0], imgKey[1])
+      .bind(
+        fullName,
+        email,
+        phoneNumber,
+        socialMedia,
+        imgKey[0],
+        imgKey[1],
+        type,
+        absoluteUrl
+      )
       .run();
 
     return c.json({ userId: stmnt.meta.last_row_id }, 201);
   } catch (error) {
+    console.log(error);
+
     return c.json({ error: error }, 500);
   }
 });
