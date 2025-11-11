@@ -229,6 +229,7 @@ app.put("/api/customers", async (c) => {
   let coverImgkey = data.get("coverImg");
   let profileImgkey = data.get("profileImg");
   const fullName = data.get("fullName");
+  const absoluteUrl = data.get("absoluteUrl");
   const id = data.get("id");
   const email = data.get("email");
   const phoneNumber = data.get("phoneNumber");
@@ -268,7 +269,7 @@ app.put("/api/customers", async (c) => {
     }
 
     const stmnt = await c.env.DB.prepare(
-      "UPDATE customers SET fullName = ? ,phoneNumber =?, email=?,socialMedia=?, profileImg=?,coverImg=? WHERE id = ?"
+      "UPDATE customers SET fullName = ? ,phoneNumber =?, email=?,socialMedia=?, profileImg=?,coverImg=?, absoluteUrl=?  WHERE id = ?"
     )
       .bind(
         fullName,
@@ -277,6 +278,7 @@ app.put("/api/customers", async (c) => {
         socialMedia,
         profileImgkey,
         coverImgkey,
+        absoluteUrl,
         id
       )
       .run();
