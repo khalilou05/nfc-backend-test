@@ -322,8 +322,8 @@ app.get("/api/customers", async (c) => {
   const totalCustomer = totalCustomerRes?.[0]?.count ?? 0;
 
   return c.json({
-    data: results,
-    totalCustomer: totalCustomer,
+    customers: results,
+    totalCustomers: totalCustomer,
     totalPages: Math.ceil(total / 10),
   });
 });
