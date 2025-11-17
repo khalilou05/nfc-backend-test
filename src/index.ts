@@ -84,6 +84,13 @@ app.get("/logout", async (c) => {
     sameSite: "None",
     domain: c.env.CORS,
   });
+  deleteCookie(c, "refresh_token", {
+    secure: true,
+    httpOnly: true,
+    path: "/",
+    sameSite: "None",
+    domain: c.env.CORS,
+  });
   return c.text("", 200);
 });
 
