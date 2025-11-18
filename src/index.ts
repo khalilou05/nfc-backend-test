@@ -28,7 +28,7 @@ app.use("*", rateLimitMiddleware);
 
 app.post("/login", async (c) => {
   const ip = c.req.header("cf-connecting-ip") || "unkown";
-  // @ts-expect-error
+
   const { success } = await c.env.LOGIN_RATE_LIMITER.limit({ key: ip });
   if (!success) return c.json({ error: "too many requests" }, 429);
   try {
