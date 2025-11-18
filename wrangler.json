@@ -20,7 +20,7 @@
       ],
       "r2_buckets": [
         {
-          "bucket_name": "nfc-card-app",
+          "bucket_name": "nfc-bucket-test",
           "binding": "BUCKET",
           "remote": true
         }
@@ -28,7 +28,7 @@
       "ratelimits": [
         {
           "name": "RATE_LIMITER",
-          "namespace_id": "1001",
+          "namespace_id": "1003",
           "simple": {
             "limit": 100,
             "period": 60
@@ -36,7 +36,7 @@
         },
         {
           "name": "LOGIN_RATE_LIMITER",
-          "namespace_id": "1002",
+          "namespace_id": "1004",
           "simple": {
             "limit": 3,
             "period": 60
@@ -54,7 +54,7 @@
   ],
   "r2_buckets": [
     {
-      "bucket_name": "nfc-card-app",
+      "bucket_name": "nfc-bucket-test",
       "binding": "BUCKET",
       "remote": true
     }
