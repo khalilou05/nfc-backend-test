@@ -12,7 +12,6 @@ CREATE TABLE customers(
     phoneNumber TEXT,
     profileImg TEXT,
     coverImg TEXT,
-    type TEXT,
     socialMedia TEXT,
     createdAt TEXT
 , type TEXT, absoluteUrl TEXT);
