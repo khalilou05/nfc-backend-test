@@ -4,7 +4,7 @@
   "name": "nfc-card-backend-test",
   "upload_source_maps": true,
   "vars": {
-    "CORS": "nfc-card-frontend-test.khalilbenmeziane.workers.dev"
+    "CORS": ".khalilbenmeziane.workers.dev"
   },
   "env": {
     "dev": {

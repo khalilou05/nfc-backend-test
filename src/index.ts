@@ -61,12 +61,14 @@ app.post("/login", async (c) => {
         secure: true,
         sameSite: "None",
         httpOnly: true,
+        domain: c.env.CORS,
       });
       setCookie(c, "refresh_token", refreshToken, {
         path: "/",
         secure: true,
         sameSite: "None",
         httpOnly: true,
+        domain: c.env.CORS,
       });
       return c.text("ok", 200);
     }
