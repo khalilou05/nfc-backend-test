@@ -328,7 +328,7 @@ app.get("/api/customers", async (c) => {
     `SELECT COUNT(*) as count FROM customers`
   ).all();
 
-  const total = countResult?.[0]?.count ?? 0;
+  const total = countResult?.[0]?.count === 0 ? 1 : countResult?.[0]?.count;
   const totalCustomer = totalCustomerRes?.[0]?.count ?? 0;
 
   return c.json({
